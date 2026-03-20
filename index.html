@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ruleta de Estudiantes y Preguntas</title>
+  <style>
+    :root{
+      --bg:#0b1220;
+      --card:#111b33;
+      --border:#2a3a66;
+      --text:#e8eefc;
+      --accent:#6ea8fe;
+      --accent2:#7ef0c5;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:linear-gradient(180deg, #070c18, var(--bg));
+      color:var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      padding:24px;
+    }
+    .wrap{
+      width:min(900px, 100%);
+      background:rgba(17,27,51,0.65);
+      border:1px solid rgba(42,58,102,0.9);
+      border-radius:18px;
+      padding:22px;
+      box-shadow: 0 10px 40px rgba(0,0,0,.35);
+    }
+    h1{
+      margin:0 0 16px;
+      font-size:20px;
+      font-weight:700;
+      letter-spacing:.2px;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:16px;
+    }
+    @media (max-width: 680px){
+      .grid{ grid-template-columns:1fr; }
+    }
+    .box{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:18px;
+      min-height:140px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      position:relative;
+      overflow:hidden;
+    }
+    .label{
+      font-size:12px;
+      color:rgba(232,238,252,.75);
+      text-transform:uppercase;
+      letter-spacing:.12em;
+      font-weight:700;
+    }
+    .value{
+      font-size:26px;
+      font-weight:800;
+      line-height:1.15;
+      word-break:break-word;
+      display:flex;
+      align-items:center;
+      min-height:70px;
+      padding-top:4px;
+    }
+    .highlight{
+      border-color: rgba(110,168,254,.65);
+      box-shadow: 0 0 0 2px rgba(110,168,254,.12) inset;
+    }
+    .highlight2{
+      border-color: rgba(126,240,197,.6);
+      box-shadow: 0 0 0 2px rgba(126,240,197,.12) inset;
+    }
+    .controls{
+      display:flex;
+      flex-wrap:wrap;
+      gap:12px;
+      align-items:center;
+      justify-content:space-between;
+      margin-top:16px;
+    }
+    button{
+      appearance:none;
+      border:1px solid rgba(110,168,254,.55);
+      background:rgba(110,168,254,.15);
+      color:var(--text);
+      border-radius:12px;
+      padding:12px 16px;
+      font-weight:800;
+      cursor:pointer;
+      transition: transform .05s ease, background .15s ease, border-color .15s ease, opacity .15s ease;
+      user-select:none;
+    }
+    button:active{ transform: translateY(1px); }
+    button:disabled{
+      opacity:.6;
+      cursor:not-allowed;
+    }
+    .status{
+      font-size:13px;
+      color:rgba(232,238,252,.8);
+      font-weight:600;
+    }
+    .pulse{
+      position:absolute;
+      inset:-40px;
+      background: radial-gradient(circle at 20% 30%, rgba(110,168,254,.18), transparent 55%),
+                  radial-gradient(circle at 70% 60%, rgba(126,240,197,.12), transparent 50%);
+      animation: glow 2s ease-in-out infinite;
+      pointer-events:none;
+    }
+    @keyframes glow{
+      0%,100%{ transform: translate3d(0,0,0); opacity:.85; }
+      50%{ transform: translate3d(0,-8px,0); opacity:1; }
+    }
+    .smallHint{
+      margin-top:12px;
+      font-size:12px;
+      color:rgba(232,238,252,.7);
+      font-weight:600;
+    }
+
+    .historySection{
+      margin-top:18px;
+      padding-top:14px;
+      border-top:1px solid rgba(42,58,102,0.75);
+    }
+
+    .historyTitle{
+      font-size:13px;
+      color:rgba(232,238,252,.9);
+      font-weight:800;
+      margin:0 0 10px;
+      letter-spacing:.2px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+
+    .historyMeta{
+      font-size:12px;
+      font-weight:700;
+      color:rgba(232,238,252,.7);
+    }
+
+    .history{
+      background:rgba(17,27,51,0.45);
+      border:1px solid rgba(42,58,102,0.75);
+      border-radius:14px;
+      padding:12px;
+      max-height:260px;
+      overflow:auto;
+    }
+
+    .historyItem{
+      padding:10px 10px;
+      border-radius:12px;
+      border:1px solid rgba(42,58,102,0.55);
+      background:rgba(110,168,254,0.08);
+      margin-bottom:10px;
+    }
+
+    .historyRow{
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      justify-content:space-between;
+    }
+
+    .historyBadge{
+      font-size:12px;
+      font-weight:900;
+      color:rgba(232,238,252,.9);
+      min-width:62px;
+    }
+
+    .historyText{
+      flex:1;
+      min-width:0;
+      font-size:13px;
+      color:rgba(232,238,252,.88);
+      font-weight:700;
+      line-height:1.25;
+      word-break:break-word;
+    }
+
+    .historySub{
+      margin-top:6px;
+      font-size:12px;
+      font-weight:700;
+      color:rgba(232,238,252,.72);
+      line-height:1.35;
+      word-break:break-word;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Ruleta: Estudiante y Pregunta</h1>
+
+    <div class="grid">
+      <div class="box highlight" id="boxStudent">
+        <div class="pulse"></div>
+        <div class="label">Persona</div>
+        <div class="value" id="studentValue">Presiona “Iniciar”</div>
+      </div>
+
+      <div class="box highlight2" id="boxQuestion">
+        <div class="pulse" style="animation-delay:.3s"></div>
+        <div class="label">Pregunta</div>
+        <div class="value" id="questionValue">Se mostrará después</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button id="btnStart">Iniciar</button>
+      <div class="status" id="status">Listo.</div>
+    </div>
+
+    <div class="historySection">
+      <div class="historyTitle">
+        Historial <span class="historyMeta" id="historyMeta"></span>
+      </div>
+      <div class="history" id="history"></div>
+    </div>
+
+    <div class="smallHint">
+      Modo bolillero sin repetición: cada estudiante y cada pregunta se usan una sola vez.
+    </div>
+  </div>
+
+  <script>
+    // Datos (tal como los diste)
+    const nombres = [
+      "Jhon Fredy Jaramillo Cardona",
+      "Leidy Marcela Naranjo Alvarez",
+      "Leidy Vanessa Giraldo Noreña",
+      "Luis Fernando Cano Pajoy",
+      "Natalia Becerra Cardona",
+      "Natalia Quintero Gonzalez",
+      "Alex Fernando Martinez Velasco",
+      "Angie Carolina Jimenez Marin",
+      "Brenda Osorio Atehortua",
+      "Daniel Felipe Gomez Calderon",
+      "Edwin Ladino Pinto",
+      "Eisenhower Castro Quintero",
+      "Erika Alejandra Escobar Salazar",
+      "Geimy Acevedo Valenca",
+      "Harold Alexander Bueno Santa",
+      "Hector Fabian Davila Villa",
+      "Hugo Antonio Escobar Betancur",
+      "Jeny Paola Rubio Castro"
+    ];
+
+    const preguntas = [
+      "¿Cuál es el objetivo principal de la gestión documental?",
+      "¿Qué herramientas se utilizan para organizar y clasificar los documentos en la planeación documental?",
+      "¿Qué función cumple la Ventanilla Única en la gestión documental?",
+      "¿Cuáles son los dos principios que se deben respetar en la organización documental?",
+      "¿Qué es una transferencia documental primaria?"
+    ];
+
+    // Elementos
+    const btnStart = document.getElementById("btnStart");
+    const statusEl = document.getElementById("status");
+    const studentValue = document.getElementById("studentValue");
+    const questionValue = document.getElementById("questionValue");
+
+    const boxStudent = document.getElementById("boxStudent");
+    const boxQuestion = document.getElementById("boxQuestion");
+
+    const historyEl = document.getElementById("history");
+    const historyMetaEl = document.getElementById("historyMeta");
+
+    // Utilidades
+    const randomIndex = (len) => Math.floor(Math.random() * len);
+
+    function sleep(ms){
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function shuffleCopy(arr){
+      // Fisher–Yates shuffle
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    // Muestra animación tipo ruleta y al final “fija” un índice aleatorio (uniforme)
+    async function runRoulette({list, renderFn, durationMs, tickMs, fixedIndex}) {
+      const len = list.length;
+      const finalIndex = fixedIndex ?? randomIndex(len);
+
+      const start = performance.now();
+      return new Promise((resolve) => {
+        const id = setInterval(() => {
+          const now = performance.now();
+          const elapsed = now - start;
+
+          // Mientras anima, muestra elementos para simular el giro
+          if (elapsed < durationMs) {
+            const idx = randomIndex(len); // uniforme durante el giro (no importa cuál, solo el efecto)
+            renderFn(list[idx]);
+          } else {
+            clearInterval(id);
+            renderFn(list[finalIndex]); // fija resultado final
+            resolve();
+          }
+        }, tickMs);
+      });
+    }
+
+    // Estado del bolillero (sin reemplazo)
+    let studentOrder = shuffleCopy(nombres);
+    let questionOrder = shuffleCopy(preguntas);
+    let studentPos = 0;
+    let questionPos = 0;
+    const history = [];
+
+    function updateHistoryUI(){
+      historyEl.innerHTML = "";
+      historyMetaEl.textContent = `(${history.length}/${Math.min(nombres.length, preguntas.length)})`;
+
+      if (history.length === 0) {
+        const empty = document.createElement("div");
+        empty.style.color = "rgba(232,238,252,.68)";
+        empty.style.fontWeight = "700";
+        empty.style.fontSize = "12px";
+        empty.textContent = "Aún no hay sorteos. Presiona “Iniciar”.";
+        historyEl.appendChild(empty);
+        return;
+      }
+
+      history.forEach((item, idx) => {
+        const entry = document.createElement("div");
+        entry.className = "historyItem";
+
+        const row = document.createElement("div");
+        row.className = "historyRow";
+
+        const badge = document.createElement("div");
+        badge.className = "historyBadge";
+        badge.textContent = `#${idx + 1}`;
+
+        const text = document.createElement("div");
+        text.className = "historyText";
+        text.textContent = item.student;
+
+        row.appendChild(badge);
+        row.appendChild(text);
+
+        const sub = document.createElement("div");
+        sub.className = "historySub";
+        sub.textContent = `Pregunta: ${item.question}`;
+
+        entry.appendChild(row);
+        entry.appendChild(sub);
+        historyEl.appendChild(entry);
+      });
+    }
+
+    updateHistoryUI();
+
+    // Flujo: 1) sale persona 2) luego pregunta
+    async function start() {
+      const doneStudents = studentPos >= studentOrder.length;
+      const doneQuestions = questionPos >= questionOrder.length;
+
+      if (doneStudents || doneQuestions) {
+        btnStart.disabled = true;
+        statusEl.textContent = "No hay más sorteos disponibles (se acabaron estudiantes o preguntas).";
+        return;
+      }
+
+      const finalStudent = studentOrder[studentPos];
+      const finalQuestion = questionOrder[questionPos];
+
+      btnStart.disabled = true;
+      statusEl.textContent = "Girando la persona...";
+
+      // Limpia/precarga visual
+      studentValue.textContent = "Girando...";
+      questionValue.textContent = "Se mostrará después...";
+
+      // Hacer el foco visual
+      boxStudent.classList.add("highlight");
+      boxQuestion.classList.remove("highlight2");
+
+      // 1) Persona
+      await runRoulette({
+        list: nombres,
+        renderFn: (txt) => (studentValue.textContent = txt),
+        durationMs: 2300,
+        tickMs: 90,
+        fixedIndex: nombres.indexOf(finalStudent)
+      });
+
+      // 2) Pregunta
+      boxQuestion.classList.add("highlight2");
+      statusEl.textContent = "Girando la pregunta...";
+      await sleep(300);
+
+      await runRoulette({
+        list: preguntas,
+        renderFn: (txt) => (questionValue.textContent = txt),
+        durationMs: 2000,
+        tickMs: 110,
+        fixedIndex: preguntas.indexOf(finalQuestion)
+      });
+
+      statusEl.textContent = "Listo. Responde la pregunta al estudiante seleccionado.";
+      history.push({ student: finalStudent, question: finalQuestion });
+      studentPos += 1;
+      questionPos += 1;
+      updateHistoryUI();
+
+      const doneAfter = (studentPos >= studentOrder.length) || (questionPos >= questionOrder.length);
+      btnStart.disabled = doneAfter;
+    }
+
+    btnStart.addEventListener("click", start);
+  </script>
+</body>
+</html>
